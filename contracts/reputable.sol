@@ -1,44 +1,79 @@
 pragma solidity ^0.4.19;
 
-contract Reputable {
-    uint constant REPUTATION_FEE = 10000 wei;
-    uint constant REPUTATION_REFUND = 10000 wei;
-    
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+
+contract Reputable is Ownable {
+    uint constant ADD_PRODUCT_FEE = 10000 wei;
+
     struct Product {
         string name;
         string domain;
         uint16 downVotes;
+        uint16 upVotes;
+        uint donatedValue;
+        uint valueToRefund;
         bool closed;
         bool exists;
     }
-    
-    struct Voter {
-        uint refundableBalance;
+
+    mapping(address => uint) public productOwner;
+    Product[] public products;
+    uint addingFee;
+
+    /* EVENTS */
+
+    event ProductAdded(uint _productId, string _name, string _domain);
+
+    /* MODIFIERS */
+
+    modifier includeAddingFee() {
+        require(msg.value >= ADD_PRODUCT_FEE);
+        _;
     }
 
-    Product[] public products;
-    Voter[] public voters;
-    
-    mapping(address => uint) voterIdByAddress;
-    mapping(uint => address) adder;
-    mapping(uint => uint[]) downVoters; // producdId => VoterId[]
-    
-    modifier includeAddingFee() {
-        require(msg.value >= REPUTATION_FEE);
-        _;
-    }
-    
-    modifier includeDownVoteFee() {
-        require(msg.value >= REPUTATION_FEE);
-        _;
-    }
-    
-    modifier productExits(uint _productId) {
+    modifier productExists(uint _productId) {
         require(products[_productId].exists);
         _;
     }
-    
-    function addProduct(string _name, string _domain) public 
+
+    modifier productOpen(uint _productId) {
+        Product memory product = products[_productId];
+        require(!product.closed);
+        _;
+    }
+
+    modifier productClosed(uint _productId) {
+        Product memory product = products[_productId];
+        require(product.closed);
+        _;
+    }
+
+    modifier onlyProductOwner(uint _productId) {
+        require(productOwner[msg.sender] == _productId);
+        _;
+    }
+
+    /* CONSTRUCTOR */
+    function Reputable() public
+        Ownable()
+    {
+        Product memory product = Product({
+            name: "Reputable Hunt",
+            domain: "reputablehunt.ens",
+            downVotes: 0,
+            upVotes: 0,
+            donatedValue: 0,
+            valueToRefund: 0,
+            closed: true,
+            exists: true
+        });
+
+        products.push(product) - 1;
+    }
+
+    /* EXTERNALS */
+
+    function addProduct(string _name, string _domain) external
         payable
         includeAddingFee()
     {
@@ -46,11 +81,39 @@ contract Reputable {
             name: _name,
             domain: _domain,
             downVotes: 0,
+            upVotes: 0,
+            donatedValue: 0,
+            valueToRefund: 0,
             closed: false,
             exists: true
         });
 
         uint productId = products.push(product) - 1;
-        adder[productId] = msg.sender;
+        addingFee += msg.value;
+
+        ProductAdded(productId, _name, _domain);
+    }
+
+    function getProduct(uint _productId) external
+        view
+        returns (
+            string name,
+            string domain,
+            uint16 downVotes,
+            uint16 upVotes,
+            uint donatedValue,
+            uint valueToRefund,
+            bool closed
+        )
+    {
+        return (
+            products[_productId].name,
+            products[_productId].domain,
+            products[_productId].downVotes,
+            products[_productId].upVotes,
+            products[_productId].donatedValue,
+            products[_productId].valueToRefund,
+            products[_productId].closed
+        );
     }
 }

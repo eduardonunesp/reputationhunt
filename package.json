@@ -1,0 +1,25 @@
+{
+  "name": "icoTest",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "ganache-cli": "ganache-cli -p 8545 --host 127.0.0.1 -g 1 -l 9007199254740991",
+    "migrate": "truffle migrate",
+    "deploy": "truffle deploy",
+    "compile": "truffle compile",
+    "test": "truffle test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ganache-cli": "^6.0.3",
+    "truffle": "^4.0.6",
+    "web3": "^0.20.3",
+    "zeppelin-solidity": "1.6.0"
+  }
+}
