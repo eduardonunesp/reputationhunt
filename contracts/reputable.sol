@@ -68,7 +68,8 @@ contract Reputable is Ownable {
             exists: true
         });
 
-        products.push(product) - 1;
+        uint productId = products.push(product) - 1;
+        productOwner[msg.sender] = productId;
     }
 
     /* EXTERNALS */
